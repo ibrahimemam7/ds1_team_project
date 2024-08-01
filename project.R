@@ -3,6 +3,12 @@
 # load relevant packages
 library(funModeling)
 library(tidyverse)
+library(MASS)
+
+
+###############
+## Data Prep ##
+###############
 
 # import data into data frame
 d <- read.csv("ds_project_data.csv")
@@ -54,3 +60,14 @@ sum(d$ESS > 24, na.rm = T)
 d$ESS[d$ESS > 24] <- NA
 
 # data for other scales is within expected ranges
+
+##########################################
+## Multiple Imputation for Missing Data ##
+##########################################
+
+#####################
+## Experimentation ##
+#####################
+
+full.model <- lm(PSQI~., data=d)
+summary(full.model)
