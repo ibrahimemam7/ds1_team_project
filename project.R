@@ -1,9 +1,8 @@
-# lets do our project here YAYYYYY
-
 # load relevant packages
 library(funModeling)
 library(tidyverse)
 library(MASS)
+library(mice)
 
 
 ###############
@@ -65,9 +64,36 @@ d$ESS[d$ESS > 24] <- NA
 ## Multiple Imputation for Missing Data ##
 ##########################################
 
-#####################
-## Experimentation ##
-#####################
+# set appropriate imputation method for each variable in the dataset 
 
-full.model <- lm(PSQI~., data=d)
-summary(full.model)
+#' "norm.nob" used for numerical variables, "logreg" used for binary variables, and 
+#' no method ("") used for PSQI since it will be excluded from analysis due to
+#' excessive missing data. Additionally, no method will be used for variables
+#' that have no missing values (no imputation necessary).
+imp_methods <- c(
+  "PSQI" = "",
+  "ESS" = "norm.nob",
+  "BSS" = "logreg",
+  "AIS" = "norm.nob",
+  "SF36.PCS" = "norm.nob",
+  "SF36.MCS" = "norm.nob",
+  "Age" = "norm.nob",
+  "Gender" = "",
+  "BMI" = "norm.nob",
+  "Time.from.transplant" = "",
+  "Liver.Diagnosis" = "",
+  "Recurrence.of.disease" = "",
+  "Rejection.graft.dysfunction" = "",
+  "Any.fibrosis" = "",
+  "Renal.Failure" = "",
+  "Depression" = "",
+  "Corticoid" = ""
+)
+
+# create 5 imputed data sets with the methods specified above
+d_imputed <- mice(d, method = imp_methods, seed = 7, m = 5, print = FALSE)
+
+# extract the first of 5 imputed data sets
+imp1 <- complete(d_imputed, action = 1) 
+status(imp1)
+
