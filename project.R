@@ -60,6 +60,12 @@ d$ESS[d$ESS > 24] <- NA
 
 # data for other scales is within expected ranges
 
+#' new columns to represent ESS and AIS as binary variable
+#' an ESS score above 10 is indicative of excessive daytime sleepiness
+#' an AIS score above 10 is considered clinical insomnia
+d$ESS_binary <- d$ESS > 10
+d$AIS_binary <- d$AIS > 10
+
 ##########################################
 ## Multiple Imputation for Missing Data ##
 ##########################################
@@ -87,7 +93,9 @@ imp_methods <- c(
   "Any.fibrosis" = "",
   "Renal.Failure" = "",
   "Depression" = "",
-  "Corticoid" = ""
+  "Corticoid" = "",
+  "ESS_binary" = "logreg",
+  "AIS_binary" = "logreg"
 )
 
 # create 5 imputed data sets with the methods specified above
@@ -96,4 +104,3 @@ d_imputed <- mice(d, method = imp_methods, seed = 7, m = 5, print = FALSE)
 # extract the first of 5 imputed data sets
 imp1 <- complete(d_imputed, action = 1) 
 status(imp1)
-
