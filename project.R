@@ -99,8 +99,61 @@ imp_methods <- c(
 )
 
 # create 5 imputed data sets with the methods specified above
-d_imputed <- mice(d, method = imp_methods, seed = 7, m = 5, print = FALSE)
+d_imputed <- mice(d, method = imp_methods, seed = 15, m = 5, print = FALSE)
 
-# extract the first of 5 imputed data sets
-imp1 <- complete(d_imputed, action = 1) 
-status(imp1)
+# initialize an empty list to store the imputed datasets
+completed_data_list <- list()
+
+# extract the imputed datasets
+for (i in 1:d_imputed$m) {
+  completed_data_list[[i]] <- complete(d_imputed, action = i)
+}
+
+##############################
+## Sleep Disturbance Models ##
+##############################
+
+#' create function to calculate the maximum number of degrees of freedom
+#' in the predictors.
+max_predictors <- function(variable, dataframes) {
+  
+  # find the max df in predictors for a continuous response variable
+  if(variable %in% c("SF36.PCS", "SF36.MCS")) {
+    tmp <- dataframes[[1]] %>% 
+      filter(!is.na(get(variable))) %>% 
+      summarise(n_observations = n())
+    
+    return(floor(tmp$n_observations/15))
+    
+  } else {
+    # if the response variable is logical
+    # initialize counters
+    min_true_count <- Inf
+    min_false_count <- Inf
+    
+    # loop through each dataframe in the list
+    
+    for (df in dataframes) {
+      
+      # summarize counts of TRUE and FALSE
+      counts <- df %>%
+        summarise(
+          true_count = sum(get(variable), na.rm = TRUE),
+          false_count = sum(!get(variable), na.rm = TRUE)
+        )
+      
+      # update the minimum counts
+      min_true_count <- min(min_true_count, counts$true_count)
+      min_false_count <- min(min_false_count, counts$false_count)
+    }
+    
+    # return the lower of the two minimum counts divided by 15 (lowest whole number)
+    return(floor(min(min_true_count, min_false_count) / 15))
+  }
+}
+
+#' check the max number of df in predictors for a model that predicts "ESS_binary"
+max_predictors("ESS_binary", completed_data_list)
+
+model_ESS <- with(d_imputed, glm(ESS_binary~Gender+SF36.MCS+Time.from.transplant, family = binomial))
+summary(pool(model_ESS))
