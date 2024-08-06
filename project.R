@@ -3,7 +3,7 @@ library(funModeling)
 library(tidyverse)
 library(MASS)
 library(mice)
-library(car)
+library(corrplot)
 
 ###############
 ## Data Prep ##
@@ -152,6 +152,24 @@ max_predictors <- function(variable, dataframes) {
   }
 }
 
+#' to explore which variables correlate with sleep disturbance, a correlation plot can be used
+#' correlation plot will only work for numeric variables
+sleep_dist_cor <- d %>% 
+  dplyr::select(-PSQI)
+
+sleep_dist_cor <- sleep_dist_cor[sapply(sleep_dist_cor, is.numeric)]
+
+sleep_dist_cor_matrix <- cor(sleep_dist_cor, use = "pairwise.complete.obs")
+
+# select only relevant columns in the matrix
+sleep_dist_cor_matrix <- sleep_dist_cor_matrix[c("ESS", "AIS"), !colnames(sleep_dist_cor_matrix) %in% c("ESS", "AIS")]
+
+# create a correlation plot
+corrplot(sleep_dist_cor_matrix, method = "square",
+         title = "Correlations with Sleep Disturbance",
+         mar = c(0,0,1,0), cl.pos = "b", cl.ratio = 2, tl.col = "black",
+         cex.main = 1.2, tl.srt = 45)
+
 #' check the max number of df in predictors for a model that predicts "ESS_binary"
 max_predictors("ESS_binary", completed_data_list)
 
@@ -160,4 +178,24 @@ max_predictors("ESS_binary", completed_data_list)
 model_ESS <- with(d_imputed, glm(ESS_binary~Gender+SF36.MCS+BMI+SF36.PCS+Time.from.transplant, family = binomial))
 summary(pool(model_ESS))
 
-# need to reduce the number of predictors by 1 df, next step: comparing nested models
+# need to reduce the number of predictors by 1 df, next step: comparing models via AIC
+
+# create function to compute the mean AIC from the 5 models
+aic.mi <- function(model_list) {
+  
+  # get the  AIC value from each model
+  aic_values <- sapply(model_list, function(model) {
+    if (!is.null(model) && length(model$coefficients) > 0) {
+      return(AIC(model))
+    } else {
+      return(NA)
+    }
+  })
+  
+  # calculate the mean AIC value
+  mean_aic <- mean(aic_values, na.rm = TRUE)
+  
+  return(mean_aic)
+}
+
+aic.mi(model_ESS$analyses)
