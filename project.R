@@ -4,6 +4,7 @@ library(tidyverse)
 library(MASS)
 library(mice)
 library(corrplot)
+library(car)
 
 ###############
 ## Data Prep ##
@@ -183,14 +184,11 @@ summary(pool(model_ESS))
 # create function to compute the mean AIC from the 5 models
 aic.mi <- function(model_list) {
   
-  # get the  AIC value from each model
-  aic_values <- sapply(model_list, function(model) {
-    if (!is.null(model) && length(model$coefficients) > 0) {
-      return(AIC(model))
-    } else {
-      return(NA)
-    }
-  })
+  # get the AIC value for each model
+  aic_values <- c()
+  for(i in 1:length(model_list)) {
+    aic_values[i] <- model_list[[i]]$aic
+  }
   
   # calculate the mean AIC value
   mean_aic <- mean(aic_values, na.rm = TRUE)
@@ -212,3 +210,10 @@ aic.mi(model_ESS_2$analyses)
 aic.mi(model_ESS_3$analyses)
 
 # model 3 (does not use time from transplant as a predictor) has the lowest AIC score
+
+# check for co-linearity in the best model
+for(i in 1:5){
+  print(vif(model_ESS_3$analyses[[i]]))
+}
+
+# all VIF < 5, so there is no evidence of co-linearity
