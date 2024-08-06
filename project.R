@@ -3,7 +3,7 @@ library(funModeling)
 library(tidyverse)
 library(MASS)
 library(mice)
-
+library(car)
 
 ###############
 ## Data Prep ##
@@ -155,5 +155,9 @@ max_predictors <- function(variable, dataframes) {
 #' check the max number of df in predictors for a model that predicts "ESS_binary"
 max_predictors("ESS_binary", completed_data_list)
 
-model_ESS <- with(d_imputed, glm(ESS_binary~Gender+SF36.MCS+Time.from.transplant, family = binomial))
+#' create logistic regression for ESS_binary
+#' predictors were determined via clinical literature search
+model_ESS <- with(d_imputed, glm(ESS_binary~Gender+SF36.MCS+BMI+SF36.PCS+Time.from.transplant, family = binomial))
 summary(pool(model_ESS))
+
+# need to reduce the number of predictors by 1 df, next step: comparing nested models
