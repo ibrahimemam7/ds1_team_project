@@ -170,7 +170,7 @@ corrplot(sleep_dist_cor_matrix, method = "square",
          mar = c(0,0,1,0), cl.pos = "b", cl.ratio = 2, tl.col = "black",
          cex.main = 1.2, tl.srt = 45)
 
-#' check the max number of df in predictors for a model that predicts "ESS_binary"
+# check the max number of df in predictors for a model that predicts "ESS_binary"
 max_predictors("ESS_binary", completed_data_list)
 
 #' create logistic regression for ESS_binary
@@ -198,4 +198,17 @@ aic.mi <- function(model_list) {
   return(mean_aic)
 }
 
+# create a simpler model without BMI
+model_ESS_2 <- with(d_imputed, glm(ESS_binary~Gender+SF36.MCS+SF36.PCS+Time.from.transplant, family = binomial))
+summary(pool(model_ESS_2))
+
+# create a simpler model without time from transplant
+model_ESS_3 <- with(d_imputed, glm(ESS_binary~Gender+SF36.MCS+SF36.PCS+BMI, family = binomial))
+summary(pool(model_ESS_3))
+
+# compare the AIC of the three models
 aic.mi(model_ESS$analyses)
+aic.mi(model_ESS_2$analyses)
+aic.mi(model_ESS_3$analyses)
+
+# model 3 (does not use time from transplant as a predictor) has the lowest AIC score
