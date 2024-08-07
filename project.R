@@ -60,47 +60,35 @@ d$ESS[d$ESS > 24] <- NA
 
 # data for other scales is within expected ranges
 
-#' new columns to represent ESS and AIS as binary variable
-#' an ESS score above 10 is indicative of excessive daytime sleepiness
-#' an AIS score above 10 is considered clinical insomnia
-d$ESS_binary <- d$ESS > 10
-d$AIS_binary <- d$AIS > 10
-
 ##########################################
 ## Multiple Imputation for Missing Data ##
 ##########################################
 
 # set appropriate imputation method for each variable in the dataset 
 
-#' "norm.nob" used for numerical variables, "logreg" used for binary variables, and 
-#' no method ("") used for PSQI since it will be excluded from analysis due to
-#' excessive missing data. Additionally, no method will be used for variables
+#' "norm.nob" used for numerical variables, "logreg" used for binary variables.
+#' Polyreg and polr methods are only mentioned because the vector must have a
+#' length of 4. Additionally, no method will be used for variables
 #' that have no missing values (no imputation necessary).
-imp_methods <- c(
-  "PSQI" = "",
-  "ESS" = "norm.nob",
-  "BSS" = "logreg",
-  "AIS" = "norm.nob",
-  "SF36.PCS" = "norm.nob",
-  "SF36.MCS" = "norm.nob",
-  "Age" = "norm.nob",
-  "Gender" = "",
-  "BMI" = "norm.nob",
-  "Time.from.transplant" = "",
-  "Liver.Diagnosis" = "",
-  "Recurrence.of.disease" = "",
-  "Rejection.graft.dysfunction" = "",
-  "Any.fibrosis" = "",
-  "Renal.Failure" = "",
-  "Depression" = "",
-  "Corticoid" = "",
-  "ESS_binary" = "logreg",
-  "AIS_binary" = "logreg"
-)
+methods <- c("norm.nob", "logreg", "polyreg", "polr")
 
-# create 5 imputed data sets with the methods specified above
-d_imputed <- mice(d, method = imp_methods, seed = 7, m = 5, print = FALSE)
+# create an imputed dataset with the methods specified above
+d_imputed <- mice(d, defaultMethod = methods, print = F, seed = 7, m=1)
 
-# extract the first of 5 imputed data sets
-imp1 <- complete(d_imputed, action = 1) 
-status(imp1)
+# check that correct method was used for each column
+d_imputed$method
+
+# extract the imputed dataset
+d_complete <- complete(d_imputed, action = 1)
+
+# check that no NAs remain
+status(d_complete)
+
+# correct imputed values that are outside of possible range for clinical scores
+summary(d_complete)
+d_complete$ESS[d_complete$ESS < 0] <- 0
+d_complete$AIS[d_complete$AIS < 0] <- 0
+
+#' it seems mice() converted BSS column from logical to numerical, so it should be
+#' converted back to logical
+d_complete$BSS <- as.logical(d_complete$BSS)
