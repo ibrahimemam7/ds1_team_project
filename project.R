@@ -3,6 +3,7 @@ library(funModeling)
 library(tidyverse)
 library(MASS)
 library(mice)
+library(car)
 
 #######################
 ## Declare Functions ##
@@ -129,76 +130,94 @@ d_complete$BSS <- as.logical(d_complete$BSS)
 ## Sleep Disturbance Models ##
 ##############################
 
+############ ESS Model ################
+
 # determine the max number of predictors for a model with ESS as a response variable
-max.predictors("BSS", d_complete)
-
-# experiment with stepwise models
-ess.full.mod <- lm(ESS~., data = d_complete)
-ess.null.mod <- lm(ESS~1, data = d_complete)
-
-ess.step.back <- stepAIC(ess.full.mod, trace = F)
-summary(ess.step.back)
-
-ess.step.forw <- stepAIC(ess.null.mod, direction = "forward", trace = F, scope = list(upper=ess.full.mod, lower=ess.null.mod))
-summary(ess.step.forw)
+max.predictors("ESS", d_complete)
 
 # create a liner model based on clinical literature
-ess.mod <- lm(ESS ~ Gender + Time.from.transplant + BMI + Depression, data = d_complete)
+ess.mod <- lm(ESS ~ Gender + Time.from.transplant + BMI + Depression + Rejection.graft.dysfunction, data = d_complete)
 summary(ess.mod)
 
-# create a simpler model without time from transplant and BMI, then compare
-ess.mod1 <- lm(ESS ~ Gender + Depression, data = d_complete)
-summary(ess.mod1)
+# check if a simpler model is better
+ess.mod.simple <- stepAIC(ess.mod, trace = F)
+summary(ess.mod.simple)
 
-AIC(ess.mod, ess.mod1)
+# Check the AIC of the complex and simpler model
+AIC(ess.mod, ess.mod.simple)
 
-# the simpler model (model 1) is better
+# compare the two models using deviance
+deviance(ess.mod)
+deviance(ess.mod.simple)
 
-# can try adding a predictor from the stepwise function and see if the model is improved
-ess.mod2 <- lm(ESS ~ Gender + Depression + Rejection.graft.dysfunction, data = d_complete)
-summary(ess.mod2)
+# compare the models via ANOVA since these models are nested
+anova(ess.mod, ess.mod.simple)
 
-AIC(ess.mod1, ess.mod2)
+#' AIC and anova indicate the simpler model is better, while deviance indicates the
+#' complex model is better
 
-# the more complex model (model 2) is better
+# check for co-linearity
+vif(ess.mod.simple)
 
-#' can try adding another predictor since there are still two degrees of freedom
-#' in the predictors that can be used
-ess.mod3 <- lm(ESS ~ Gender + Depression + Rejection.graft.dysfunction + Renal.Failure, data = d_complete)
-summary(ess.mod3)
+# no values above 5, so there is no concern for co-linearity
 
-AIC(ess.mod2, ess.mod3)
+################ AIS Model ##################
 
-# the simpler model (model 2) is better than model 3. Can try adding a different predictor
-ess.mod4 <- lm(ESS ~ Gender + Depression + Rejection.graft.dysfunction + Recurrence.of.disease, data = d_complete)
-summary(ess.mod4)
+# check max df in predictors for model with AIS as response variable
+max.predictors("AIS", d_complete)
 
-AIC(ess.mod2, ess.mod4)
+# start with the predictors from literature
+ais.mod <- lm(AIS ~ Gender + Time.from.transplant + BMI + Depression + Rejection.graft.dysfunction, data = d_complete)
+summary(ais.mod)
 
-# the simpler model (model 2) is better than model 4. Can try adding a different predictor
-ess.mod5 <- lm(ESS ~ Gender + Depression + Rejection.graft.dysfunction + Liver.Diagnosis, data = d_complete)
-summary(ess.mod5)
+# use AIC step back to see if the model can be simplified
+ais.mod.simple <- stepAIC(ais.mod, trace = F)
+summary(ais.mod.simple)
 
-AIC(ess.mod2, ess.mod5)
+# compare the AIC of the two models
+AIC(ais.mod, ais.mod.simple)
 
-# the simpler model (model 2) is better than model 5
+# compare the two models using deviance
+deviance(ais.mod)
+deviance(ais.mod.simple)
 
-# can try a more complex model
-ess.mod6 <- lm(ESS ~ Gender + Depression + Rejection.graft.dysfunction + Recurrence.of.disease + Liver.Diagnosis, data = d_complete)
-summary(ess.mod6)
+# compare the models via ANOVA since these models are nested
+anova(ais.mod, ais.mod.simple)
 
-AIC(ess.mod2, ess.mod6) 
+#' the simpler model is better according to both ANOVA and AIC tests. Deviance
+#' indicates that the more complex model is better.
 
-# simpler model (model 2) is still better
+# check for co-linearity
+vif(ais.mod.simple)
 
-# Experiment with stepwise 
-trial <- d_complete[,c("ESS", "Age", "Gender", "BMI", "Time.from.transplant", "Liver.Diagnosis", "Recurrence.of.disease", "Rejection.graft.dysfunction", "Any.fibrosis", "Renal.Failure", "Depression", "Corticoid")]
+# no values above 5, so there is no concern for co-linearity
 
-trial.full.mod <- lm(ESS~., data = trial)
-trial.null.mod <- lm(ESS~1, data = trial)
+################ BSS Model ##################
 
-trial.step.back <- stepAIC(trial.full.mod, trace = F)
-summary(trial.step.back)
+# check max df in predictors for model with BSS as response variable
+max.predictors("BSS", d_complete)
 
-trial.step.forw <- stepAIC(trial.null.mod, direction = "forward", trace = F, scope = list(upper=trial.full.mod, lower=trial.null.mod))
-summary(trial.step.forw)
+# start with the predictors from literature
+bss.mod <- glm(BSS ~ Gender + Time.from.transplant + BMI + Depression + Rejection.graft.dysfunction, data = d_complete, family = "binomial")
+summary(bss.mod)
+
+# use AIC step back to see if the model can be simplified
+bss.mod.simple <- stepAIC(bss.mod, trace = F)
+summary(bss.mod.simple)
+
+# compare the AIC of the two models
+AIC(bss.mod, bss.mod.simple)
+
+# compare the deviance
+deviance(bss.mod)
+deviance(bss.mod.simple)
+
+# use anova LRT to compare the two models
+anova(bss.mod, bss.mod.simple, test = "Chisq")
+
+# AIC and anova indicate that the simpler model is better, but deviance indicates the opposite
+
+# check for co-linearity
+vif(bss.mod.simple)
+
+# no values above 5, so there is no concern for co-linearity
