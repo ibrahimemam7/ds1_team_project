@@ -190,3 +190,15 @@ summary(ess.mod6)
 AIC(ess.mod2, ess.mod6) 
 
 # simpler model (model 2) is still better
+
+# Experiment with stepwise 
+trial <- d_complete[,c("ESS", "Age", "Gender", "BMI", "Time.from.transplant", "Liver.Diagnosis", "Recurrence.of.disease", "Rejection.graft.dysfunction", "Any.fibrosis", "Renal.Failure", "Depression", "Corticoid")]
+
+trial.full.mod <- lm(ESS~., data = trial)
+trial.null.mod <- lm(ESS~1, data = trial)
+
+trial.step.back <- stepAIC(trial.full.mod, trace = F)
+summary(trial.step.back)
+
+trial.step.forw <- stepAIC(trial.null.mod, direction = "forward", trace = F, scope = list(upper=trial.full.mod, lower=trial.null.mod))
+summary(trial.step.forw)
