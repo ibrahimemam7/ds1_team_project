@@ -98,8 +98,6 @@ d$ESS[d$ESS > 24] <- NA
 ## Exploratory Data Analysis ##
 ###############################
 
-#-ESS, -AIS, -SF36.MCS, -SF36.PCS, -BSS
-
 # create table with summary of baseline characteristics
 d %>% 
   select(-PSQI, -ESS, -AIS, -SF36.MCS, -SF36.PCS, -BSS) %>% 
@@ -107,7 +105,19 @@ d %>%
     missing = "no",
     statistic = list(
       all_continuous() ~ "{mean} ({sd})",
-      all_categorical() ~ "{n} ({p}%)")) %>%
+      all_categorical() ~ "{n} ({p}%)"),
+    label = list(
+      Age ~ "Age (years)",
+      Gender ~ "Gender",
+      BMI ~ "BMI",
+      Time.from.transplant ~ "Time Since Transplant",
+      Liver.Diagnosis ~ "Liver Diagnosis",
+      Recurrence.of.disease ~ "Disease Recurrence",
+      Rejection.graft.dysfunction ~ "Rejection graft dysfunction",
+      Any.fibrosis ~ "Fibrosis",
+      Renal.Failure ~ "Renal Failure",
+      Depression ~ "Depression",
+      Corticoid ~ "Using Corticosteroid")) %>%
   add_n() %>% 
   bold_labels()
 
@@ -148,6 +158,17 @@ ggplot(data = d, mapping = aes(x = SF36.PCS)) +
     x = "SF36-PCS Score",
     y = "Frequency",
     title = "Distribution of SF36-PCS Scores") +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# create a bar graph to show the distribution of BSS scores
+ggplot(data = d %>% filter(!is.na(BSS)), mapping = aes(x = BSS)) +
+  geom_bar(fill = "lightgrey", col = "black", width = 0.6) +
+  scale_x_discrete(labels = c("TRUE" = "High Sleepiness", "FALSE" = "Low Sleepiness")) +
+  labs(
+    x = "BSS",
+    y = "Frequency",
+    title = "Distribution of BSS Score") +
   theme_classic() +
   theme(plot.title = element_text(hjust = 0.5))
 
