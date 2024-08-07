@@ -4,6 +4,7 @@ library(tidyverse)
 library(MASS)
 library(mice)
 library(car)
+library(gtsummary)
 
 #######################
 ## Declare Functions ##
@@ -93,9 +94,66 @@ d$ESS[d$ESS > 24] <- NA
 
 # data for other scales is within expected ranges
 
-##########################################
-## Multiple Imputation for Missing Data ##
-##########################################
+###############################
+## Exploratory Data Analysis ##
+###############################
+
+#-ESS, -AIS, -SF36.MCS, -SF36.PCS, -BSS
+
+# create table with summary of baseline characteristics
+d %>% 
+  select(-PSQI, -ESS, -AIS, -SF36.MCS, -SF36.PCS, -BSS) %>% 
+  tbl_summary(
+    missing = "no",
+    statistic = list(
+      all_continuous() ~ "{mean} ({sd})",
+      all_categorical() ~ "{n} ({p}%)")) %>%
+  add_n() %>% 
+  bold_labels()
+
+# create histogram for ESS score
+ggplot(data = d, mapping = aes(x = ESS)) +
+  geom_histogram(binwidth = 1, width = 0.8, fill = "lightgrey", col = "black") +
+  labs(
+    x = "ESS Score",
+    y = "Frequency",
+    title = "Distribution of ESS Scores") +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# create histogram for AIS score
+ggplot(data = d, mapping = aes(x = AIS)) +
+  geom_histogram(binwidth = 1, width = 0.8, fill = "lightgrey", col = "black") +
+  labs(
+    x = "AIS Score",
+    y = "Frequency",
+    title = "Distribution of AIS Scores") +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# create histogram for SF36.MCS scores
+ggplot(data = d, mapping = aes(x = SF36.MCS)) +
+  geom_histogram(binwidth = 2, width = 0.8, fill = "lightgrey", col = "black") +
+  labs(
+    x = "SF36-MCS Score",
+    y = "Frequency",
+    title = "Distribution of SF36-MCS Scores") +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# create histogram for SF36.PCS scores
+ggplot(data = d, mapping = aes(x = SF36.PCS)) +
+  geom_histogram(binwidth = 2, width = 0.8, fill = "lightgrey", col = "black") +
+  labs(
+    x = "SF36-PCS Score",
+    y = "Frequency",
+    title = "Distribution of SF36-PCS Scores") +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+#################################
+## Imputation for Missing Data ##
+#################################
 
 # set appropriate imputation method for each variable in the dataset 
 
