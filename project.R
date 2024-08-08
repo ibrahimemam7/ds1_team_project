@@ -130,43 +130,59 @@ d %>%
   modify_header(
     update = list(label ~ "Variable", stat_0 ~ "Summary Statistics", n ~ "Available Observations"))
 
+#' create data frame with additional columns to group by scoring category to help
+#' colour code the histograms that will be created next
+score_buckets <- d %>% 
+  mutate(ESS_group = ifelse(ESS < 11, "Normal Range",
+                            ifelse(ESS < 16, "Mild to Moderate Daytime Sleepiness", "High Daytime Sleepiness"))) %>% 
+  mutate(AIS_group = ifelse(AIS < 6, "Normal Sleep",
+                            ifelse(AIS < 11, "Mild Insomnia", ifelse(AIS < 16, "Moderate Insomnia", "Severe Insomnia")))) %>% 
+  mutate(mcs_group = ifelse(SF36.MCS < 40, "Low Mental Health Related QOL",
+                            ifelse(SF36.MCS < 50, "Average Mental Health Related QOL", "High Mental Health Related QOL"))) %>%
+  mutate(pcs_group = ifelse(SF36.PCS < 40, "Low Physical Health Related QOL",
+                            ifelse(SF36.PCS < 50, "Average Physical Health Related QOL", "High Physical Health Related QOL")))
+
 # create histogram for ESS score
-ggplot(data = d, mapping = aes(x = ESS)) +
-  geom_histogram(binwidth = 1, width = 0.8, fill = "lightgrey", col = "black") +
+ggplot(data = score_buckets , mapping = aes(x = ESS, fill = ESS_group)) +
+  geom_histogram(binwidth = 1, width = 0.8, col = "black") +
   labs(
     x = "ESS Score",
     y = "Frequency",
-    title = "Distribution of ESS Scores") +
+    title = "Distribution of ESS Scores",
+    fill = "ESS Interpretation") +
   theme_classic() +
   theme(plot.title = element_text(hjust = 0.5))
 
 # create histogram for AIS score
-ggplot(data = d, mapping = aes(x = AIS)) +
-  geom_histogram(binwidth = 1, width = 0.8, fill = "lightgrey", col = "black") +
+ggplot(data = score_buckets, mapping = aes(x = AIS, fill = AIS_group)) +
+  geom_histogram(binwidth = 1, width = 0.8, col = "black") +
   labs(
     x = "AIS Score",
     y = "Frequency",
-    title = "Distribution of AIS Scores") +
+    title = "Distribution of AIS Scores",
+    fill = "AIS Interpretation") +
   theme_classic() +
   theme(plot.title = element_text(hjust = 0.5))
 
 # create histogram for SF36.MCS scores
-ggplot(data = d, mapping = aes(x = SF36.MCS)) +
-  geom_histogram(binwidth = 2, width = 0.8, fill = "lightgrey", col = "black") +
+ggplot(data = score_buckets, mapping = aes(x = SF36.MCS, fill = mcs_group)) +
+  geom_histogram(binwidth = 1.5, width = 0.8, col = "black") +
   labs(
     x = "SF36-MCS Score",
     y = "Frequency",
-    title = "Distribution of SF36-MCS Scores") +
+    title = "Distribution of SF36-MCS Scores",
+    fill = "SF36-MCS Interpretation") +
   theme_classic() +
   theme(plot.title = element_text(hjust = 0.5))
 
 # create histogram for SF36.PCS scores
-ggplot(data = d, mapping = aes(x = SF36.PCS)) +
-  geom_histogram(binwidth = 2, width = 0.8, fill = "lightgrey", col = "black") +
+ggplot(data = score_buckets, mapping = aes(x = SF36.PCS, fill = pcs_group)) +
+  geom_histogram(binwidth = 1.5, width = 0.8, col = "black") +
   labs(
     x = "SF36-PCS Score",
     y = "Frequency",
-    title = "Distribution of SF36-PCS Scores") +
+    title = "Distribution of SF36-PCS Scores",
+    fill = "SF36-PCS Interpretation") +
   theme_classic() +
   theme(plot.title = element_text(hjust = 0.5))
 
