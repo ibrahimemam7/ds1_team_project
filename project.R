@@ -289,6 +289,24 @@ ess.rt.merged <- tbl_merge(
 # view the merged table
 ess.rt.merged
 
+# check normality of residuals for both models
+qqnorm(ess.mod$residuals, main = "Q-Q Plot of Residuals (ESS Original)")
+qqline(ess.mod$residuals, col = "red")
+
+qqnorm(ess.mod.simple$residuals, main = "Q-Q Plot of Residuals (ESS Simple)")
+qqline(ess.mod.simple$residuals, col = "red")
+
+# check homoscedasticity
+plot(ess.mod$fitted.values, ess.mod$residuals,
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Residuals vs. Fitted Values (ESS Original)")
+abline(h = 0, col = "red")
+
+plot(ess.mod.simple$fitted.values, ess.mod.simple$residuals,
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Residuals vs. Fitted Values (ESS Simple)")
+abline(h = 0, col = "red")
+
 ################ AIS Model ##################
 
 # check max df in predictors for model with AIS as response variable
@@ -342,6 +360,24 @@ ais.rt.merged <- tbl_merge(
 
 # view the merged table
 ais.rt.merged
+
+# check normality of residuals for both models
+qqnorm(ais.mod$residuals, main = "Q-Q Plot of Residuals (AIS Original)")
+qqline(ais.mod$residuals, col = "red")
+
+qqnorm(ais.mod.simple$residuals, main = "Q-Q Plot of Residuals (AIS Simple)")
+qqline(ais.mod.simple$residuals, col = "red")
+
+# check homoscedasticity
+plot(ais.mod$fitted.values, ais.mod$residuals,
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Residuals vs. Fitted Values (AIS Original)")
+abline(h = 0, col = "red")
+
+plot(ais.mod.simple$fitted.values, ais.mod.simple$residuals,
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Residuals vs. Fitted Values (AIS Simple)")
+abline(h = 0, col = "red")
 
 ################ BSS Model ##################
 
@@ -446,6 +482,24 @@ mcs.rt.merged <- tbl_merge(
 # view the merged table
 mcs.rt.merged
 
+# check normality of residuals for both models
+qqnorm(mcs.mod$residuals, main = "Q-Q Plot of Residuals (SF36-MCS Original)")
+qqline(mcs.mod$residuals, col = "red")
+
+qqnorm(mcs.mod.simple$residuals, main = "Q-Q Plot of Residuals (SF36-MCS Simple)")
+qqline(mcs.mod.simple$residuals, col = "red")
+
+# check homoscedasticity
+plot(mcs.mod$fitted.values, mcs.mod$residuals,
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Residuals vs. Fitted Values (SF36-MCS Original)")
+abline(h = 0, col = "red")
+
+plot(mcs.mod.simple$fitted.values, mcs.mod.simple$residuals,
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Residuals vs. Fitted Values (SF36-MCS Simple)")
+abline(h = 0, col = "red")
+
 ########### SF36-PCS Model ###########
 
 # check max predictors
@@ -470,6 +524,16 @@ summary(pcs.mod.simple)
 tbl_regression(pcs.mod, exponentiate = F, intercept = TRUE) %>% 
   italicize_levels() %>%
   bold_labels()
+
+# check normality of residuals in the model
+qqnorm(pcs.mod$residuals, main = "Q-Q Plot of Residuals (SF36-PCS)")
+qqline(pcs.mod$residuals, col = "red")
+
+# check homoscedasticity
+plot(pcs.mod$fitted.values, pcs.mod$residuals,
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Residuals vs. Fitted Values (SF36-PCS)")
+abline(h = 0, col = "red")
 
 # detach the package since it has conflicts with other packages (masking)
 detach("package:broom.helpers", unload = T)
