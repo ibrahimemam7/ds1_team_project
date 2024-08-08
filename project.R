@@ -527,3 +527,26 @@ tbl_merge <- tbl_merge(
 
 # view the table
 tbl_merge
+
+###########################
+## Estimating Prevalence ##
+###########################
+
+#' create a table to estimate the prevalence of sleep disturbance according to
+#' each of the three scales
+
+prev_table <- qol_comparison %>%
+  select(ESS_binary, AIS_binary, BSS) %>% 
+  tbl_summary(
+    statistic = list(
+      all_continuous() ~ "{mean} ({sd})",
+      all_categorical() ~ "{n} ({p}%)"),
+    label = list(
+      ESS_binary ~ "Daytime Sleepiness (ESS)",
+      AIS_binary ~ "Severity of Insomnia (AIS)",
+      BSS ~ "Sleep Disordered Breathing (BSS)")) %>%
+  bold_labels() %>% 
+  italicize_levels()
+
+# view the table
+prev_table
