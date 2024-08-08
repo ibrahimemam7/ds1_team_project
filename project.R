@@ -354,3 +354,19 @@ pcs.mod.simple <- stepAIC(pcs.mod, trace = F)
 summary(pcs.mod.simple)
 
 # the model should not be simplified
+
+########## JUST TRYIN STUFF ###########
+tmp <- d_complete %>%
+  mutate(ESS_binary = ifelse(ESS > 10, "TRUE", "FALSE"))
+  
+tmp %>% 
+  mutate(ESS_binary = ifelse(ESS > 10, "TRUE", "FALSE")) %>% 
+  select(ESS_binary, SF36.MCS, SF36.PCS) %>% 
+  tbl_summary(
+    by = ESS_binary,
+    statistic = list(
+      all_continuous() ~ "{mean} ({sd})",
+      all_categorical() ~ "{n} ({p}%)")) %>%
+  add_n() %>%
+  add_p() %>% 
+  bold_labels()
