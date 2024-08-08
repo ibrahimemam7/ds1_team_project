@@ -1,11 +1,11 @@
 # load relevant packages
-library(funModeling)
+library(funModeling) # useful for counting NAs
 library(tidyverse)
-library(MASS)
-library(mice)
-library(car)
-library(gtsummary)
-library(cardx)
+library(MASS) #step wise AIC variable selection
+library(mice) # single imputation
+library(car) # get VIF values to check for co-linearity
+library(gtsummary) # create summary tables
+library(cardx) # add p-values to tables automatically
 
 #######################
 ## Declare Functions ##
@@ -79,6 +79,7 @@ status(d)
 #' We will exclude PSQI from analysis.
 
 # formatting columns as appropriate
+d$Gender <- ifelse(d$Gender == 1, "Male", "Female")
 d$Gender <- as.factor(d$Gender)
 levels(d$Gender)
 
@@ -102,7 +103,6 @@ d$ESS[d$ESS > 24] <- NA
 # create table with summary of baseline characteristics
 d %>% 
   select(-PSQI, -ESS, -AIS, -SF36.MCS, -SF36.PCS, -BSS) %>%
-  mutate(Gender = ifelse(Gender == 1, "Male", "Female")) %>%
   mutate(Liver.Diagnosis = ifelse(Liver.Diagnosis == 1, "Hep C",
                                   ifelse(Liver.Diagnosis == 2, "Hep B",
                                          ifelse(Liver.Diagnosis == 3, "PSC/PBC/AHA",
@@ -124,6 +124,7 @@ d %>%
       Renal.Failure ~ "Renal Failure",
       Depression ~ "Depression",
       Corticoid ~ "Using Corticosteroid")) %>%
+  italicize_levels() %>% 
   add_n() %>% 
   bold_labels() %>% 
   modify_header(
@@ -217,13 +218,15 @@ d_complete$BSS <- as.logical(d_complete$BSS)
 ## Sleep Disturbance Models ##
 ##############################
 
+library(broom.helpers)
+
 ############ ESS Model ################
 
 # determine the max number of predictors for a model with ESS as a response variable
 max.predictors("ESS", d_complete)
 
 # create a liner model based on clinical literature
-ess.mod <- lm(ESS ~ Gender + Time.from.transplant + BMI + Depression + Rejection.graft.dysfunction, data = d_complete)
+ess.mod <- lm(ESS ~ Gender + Depression + Rejection.graft.dysfunction + Time.from.transplant + BMI, data = d_complete)
 summary(ess.mod)
 
 # check if a simpler model is better
@@ -247,6 +250,28 @@ anova(ess.mod, ess.mod.simple)
 vif(ess.mod.simple)
 
 # no values above 5, so there is no concern for co-linearity
+
+# create summary table for both models
+ess.rt <- tbl_regression(ess.mod, exponentiate = F, intercept = TRUE,
+  label = list(
+    Time.from.transplant ~ "Time Since Transplant (years)",
+    Rejection.graft.dysfunction ~ "Rejection Graft Dysfunction")) %>% 
+  italicize_levels() %>%
+  bold_labels()
+
+ess.rt.simple <- tbl_regression(ess.mod.simple, exponentiate = F, intercept = TRUE,
+  label = list(
+    Rejection.graft.dysfunction ~ "Rejection Graft Dysfunction")) %>% 
+  italicize_levels() %>%
+  bold_labels()
+
+# merge tables
+ess.rt.merged <- tbl_merge(
+  tbls = list(ess.rt, ess.rt.simple),
+  tab_spanner = c("**Original Model**", "**Simple Model**"))
+
+# view the merged table
+ess.rt.merged
 
 ################ AIS Model ##################
 
@@ -363,18 +388,20 @@ summary(pcs.mod.simple)
 
 # the model should not be simplified
 
+detach("package:broom.helpers", unload = T)
+
 ################################
 ## Hypothesis Testing for QOL ##
 ################################
 
 # create binary columns for each of the sleep scales
 qol_comparison <- d_complete %>%
-  mutate(ESS_binary = ifelse(ESS > 10, "High ESS", "Low ESS")) %>%
-  mutate(AIS_binary = ifelse(AIS > 10, "High AIS", "Low AIS")) %>% 
-  mutate(BSS = ifelse(BSS == TRUE, "High SDB", "Low SDB"))
+  mutate(ESS_binary = ifelse(ESS > 10, "High", "Low")) %>%
+  mutate(AIS_binary = ifelse(AIS > 10, "High", "Low")) %>% 
+  mutate(BSS = ifelse(BSS == TRUE, "High", "Low"))
   
 # compare the mean QOL for patients with high vs low ESS
-qol_comparison %>%
+t1 <- qol_comparison %>%
   select(ESS_binary, SF36.MCS, SF36.PCS) %>% 
   tbl_summary(
     by = ESS_binary,
@@ -386,7 +413,7 @@ qol_comparison %>%
   bold_labels()
 
 # compare the mean QOL for patients with high vs low AIS
-qol_comparison %>%
+t2 <- qol_comparison %>%
   select(AIS_binary, SF36.MCS, SF36.PCS) %>% 
   tbl_summary(
     by = AIS_binary,
@@ -398,7 +425,7 @@ qol_comparison %>%
   bold_labels()
 
 # compare the mean QOL for patients with high vs low BSS
-qol_comparison %>%
+t3 <- qol_comparison %>%
   select(BSS, SF36.MCS, SF36.PCS) %>% 
   tbl_summary(
     by = BSS,
@@ -408,3 +435,11 @@ qol_comparison %>%
   add_n() %>%
   add_p() %>% 
   bold_labels()
+
+# merge tables
+tbl_merge <- tbl_merge(
+    tbls = list(t1, t2, t3),
+    tab_spanner = c("**ESS**", "**AIS**", "**BSS**"))
+
+# view the table
+tbl_merge
