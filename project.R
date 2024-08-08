@@ -251,7 +251,7 @@ vif(ess.mod.simple)
 
 # no values above 5, so there is no concern for co-linearity
 
-# create summary table for both models
+# create summary tables for both models
 ess.rt <- tbl_regression(ess.mod, exponentiate = F, intercept = TRUE,
   label = list(
     Time.from.transplant ~ "Time Since Transplant (years)",
@@ -265,7 +265,7 @@ ess.rt.simple <- tbl_regression(ess.mod.simple, exponentiate = F, intercept = TR
   italicize_levels() %>%
   bold_labels()
 
-# merge tables
+# merge ESS tables
 ess.rt.merged <- tbl_merge(
   tbls = list(ess.rt, ess.rt.simple),
   tab_spanner = c("**Original Model**", "**Simple Model**"))
@@ -279,7 +279,7 @@ ess.rt.merged
 max.predictors("AIS", d_complete)
 
 # start with the predictors from literature
-ais.mod <- lm(AIS ~ Gender + Time.from.transplant + BMI + Depression + Rejection.graft.dysfunction, data = d_complete)
+ais.mod <- lm(AIS ~ Time.from.transplant + Depression + Rejection.graft.dysfunction + BMI + Gender, data = d_complete)
 summary(ais.mod)
 
 # use AIC step back to see if the model can be simplified
@@ -304,13 +304,36 @@ vif(ais.mod.simple)
 
 # no values above 5, so there is no concern for co-linearity
 
+# create summary tables for both models
+ais.rt <- tbl_regression(ais.mod, exponentiate = F, intercept = TRUE,
+  label = list(
+    Time.from.transplant ~ "Time Since Transplant (years)",
+    Rejection.graft.dysfunction ~ "Rejection Graft Dysfunction")) %>% 
+  italicize_levels() %>%
+  bold_labels()
+
+ais.rt.simple <- tbl_regression(ais.mod.simple, exponentiate = F, intercept = TRUE,
+  label = list(
+    Rejection.graft.dysfunction ~ "Rejection Graft Dysfunction",
+    Time.from.transplant  ~ "Time Since Transplant (years)")) %>% 
+  italicize_levels() %>%
+  bold_labels()
+
+# merge AIS tables
+ais.rt.merged <- tbl_merge(
+  tbls = list(ais.rt, ais.rt.simple),
+  tab_spanner = c("**Original Model**", "**Simple Model**"))
+
+# view the merged table
+ais.rt.merged
+
 ################ BSS Model ##################
 
 # check max df in predictors for model with BSS as response variable
 max.predictors("BSS", d_complete)
 
 # start with the predictors from literature
-bss.mod <- glm(BSS ~ Gender + Time.from.transplant + BMI + Depression + Rejection.graft.dysfunction, data = d_complete, family = "binomial")
+bss.mod <- glm(BSS ~ BMI + Time.from.transplant + Gender + Depression + Rejection.graft.dysfunction, data = d_complete, family = "binomial")
 summary(bss.mod)
 
 # use AIC step back to see if the model can be simplified
@@ -333,6 +356,28 @@ anova(bss.mod, bss.mod.simple, test = "Chisq")
 vif(bss.mod.simple)
 
 # no values above 5, so there is no concern for co-linearity
+
+# create summary tables for both models
+bss.rt <- tbl_regression(bss.mod, exponentiate = T, intercept = TRUE,
+  label = list(
+    Time.from.transplant ~ "Time Since Transplant (years)",
+    Rejection.graft.dysfunction ~ "Rejection Graft Dysfunction")) %>% 
+  italicize_levels() %>%
+  bold_labels()
+
+bss.rt.simple <- tbl_regression(bss.mod.simple, exponentiate = T, intercept = TRUE,
+  label = list(
+    Time.from.transplant  ~ "Time Since Transplant (years)")) %>% 
+  italicize_levels() %>%
+  bold_labels()
+
+# merge BSS tables
+bss.rt.merged <- tbl_merge(
+  tbls = list(bss.rt, bss.rt.simple),
+  tab_spanner = c("**Original Model**", "**Simple Model**"))
+
+# view the merged table
+bss.rt.merged
 
 ################
 ## QOL Models ##
@@ -366,7 +411,24 @@ deviance(mcs.mod.simple)
 # compare via anova
 anova(mcs.mod, mcs.mod.simple)
 
-# anova and AIC indicate the smaller model is sufficient, deviance indicates the opposite
+# anova and AIC indicate the simpler model is sufficient, deviance indicates the opposite
+
+# create summary tables for both models
+mcs.rt <- tbl_regression(mcs.mod, exponentiate = F, intercept = TRUE) %>% 
+  italicize_levels() %>%
+  bold_labels()
+
+mcs.rt.simple <- tbl_regression(mcs.mod.simple, exponentiate = F, intercept = TRUE) %>% 
+  italicize_levels() %>%
+  bold_labels()
+
+# merge MCS tables
+mcs.rt.merged <- tbl_merge(
+  tbls = list(mcs.rt, mcs.rt.simple),
+  tab_spanner = c("**Original Model**", "**Simple Model**"))
+
+# view the merged table
+mcs.rt.merged
 
 ########### SF36-PCS Model ###########
 
@@ -388,6 +450,12 @@ summary(pcs.mod.simple)
 
 # the model should not be simplified
 
+# create summary table for the model
+tbl_regression(pcs.mod, exponentiate = F, intercept = TRUE) %>% 
+  italicize_levels() %>%
+  bold_labels()
+
+# detach the package since it has conflicts with other packages (masking)
 detach("package:broom.helpers", unload = T)
 
 ################################
