@@ -300,3 +300,57 @@ anova(bss.mod, bss.mod.simple, test = "Chisq")
 vif(bss.mod.simple)
 
 # no values above 5, so there is no concern for co-linearity
+
+################
+## QOL Models ##
+################
+
+########### SF36-MCS Model ###########
+
+# check max predictors
+max.predictors("SF36.MCS", d_complete)
+
+# create a linear model to predict QOL based on sleep disturbance
+mcs.mod <- lm(SF36.MCS ~ ESS + AIS + BSS, data = d_complete)
+summary(mcs.mod)
+
+# check of co-linearity
+vif(mcs.mod)
+
+# no evidence of co-linearity
+
+# check if simpler model can be used
+mcs.mod.simple <- stepAIC(mcs.mod, trace = F)
+summary(mcs.mod.simple)
+
+# compare the two models with AIC
+AIC(mcs.mod, mcs.mod.simple)
+
+# compare the deviance
+deviance(mcs.mod)
+deviance(mcs.mod.simple)
+
+# compare via anova
+anova(mcs.mod, mcs.mod.simple)
+
+# anova and AIC indicate the smaller model is sufficient, deviance indicates the opposite
+
+########### SF36-PCS Model ###########
+
+# check max predictors
+max.predictors("SF36.PCS", d_complete)
+
+# create a linear model to predict QOL based on sleep disturbance
+pcs.mod <- lm(SF36.PCS ~ ESS + AIS + BSS, data = d_complete)
+summary(pcs.mod)
+
+# check of co-linearity
+vif(pcs.mod)
+
+# no evidence of co-linearity
+
+# check if simpler model can be used
+pcs.mod.simple <- stepAIC(pcs.mod, trace = F)
+summary(pcs.mod.simple)
+
+# the model should not be simplified
