@@ -5,6 +5,7 @@ library(MASS)
 library(mice)
 library(car)
 library(gtsummary)
+library(cardx)
 
 #######################
 ## Declare Functions ##
@@ -100,7 +101,12 @@ d$ESS[d$ESS > 24] <- NA
 
 # create table with summary of baseline characteristics
 d %>% 
-  select(-PSQI, -ESS, -AIS, -SF36.MCS, -SF36.PCS, -BSS) %>% 
+  select(-PSQI, -ESS, -AIS, -SF36.MCS, -SF36.PCS, -BSS) %>%
+  mutate(Gender = ifelse(Gender == 1, "Male", "Female")) %>%
+  mutate(Liver.Diagnosis = ifelse(Liver.Diagnosis == 1, "Hep C",
+                                  ifelse(Liver.Diagnosis == 2, "Hep B",
+                                         ifelse(Liver.Diagnosis == 3, "PSC/PBC/AHA",
+                                                ifelse(Liver.Diagnosis == 4, "Alcohol", "Other"))))) %>% 
   tbl_summary(
     missing = "no",
     statistic = list(
@@ -110,16 +116,18 @@ d %>%
       Age ~ "Age (years)",
       Gender ~ "Gender",
       BMI ~ "BMI",
-      Time.from.transplant ~ "Time Since Transplant",
+      Time.from.transplant ~ "Time Since Transplant (years)",
       Liver.Diagnosis ~ "Liver Diagnosis",
       Recurrence.of.disease ~ "Disease Recurrence",
-      Rejection.graft.dysfunction ~ "Rejection graft dysfunction",
+      Rejection.graft.dysfunction ~ "Rejection Graft Dysfunction",
       Any.fibrosis ~ "Fibrosis",
       Renal.Failure ~ "Renal Failure",
       Depression ~ "Depression",
       Corticoid ~ "Using Corticosteroid")) %>%
   add_n() %>% 
-  bold_labels()
+  bold_labels() %>% 
+  modify_header(
+    update = list(label ~ "Variable", stat_0 ~ "Summary Statistics", n ~ "Available Observations"))
 
 # create histogram for ESS score
 ggplot(data = d, mapping = aes(x = ESS)) +
@@ -355,15 +363,45 @@ summary(pcs.mod.simple)
 
 # the model should not be simplified
 
-########## JUST TRYIN STUFF ###########
-tmp <- d_complete %>%
-  mutate(ESS_binary = ifelse(ESS > 10, "TRUE", "FALSE"))
+################################
+## Hypothesis Testing for QOL ##
+################################
+
+# create binary columns for each of the sleep scales
+qol_comparison <- d_complete %>%
+  mutate(ESS_binary = ifelse(ESS > 10, "High ESS", "Low ESS")) %>%
+  mutate(AIS_binary = ifelse(AIS > 10, "High AIS", "Low AIS")) %>% 
+  mutate(BSS = ifelse(BSS == TRUE, "High SDB", "Low SDB"))
   
-tmp %>% 
-  mutate(ESS_binary = ifelse(ESS > 10, "TRUE", "FALSE")) %>% 
+# compare the mean QOL for patients with high vs low ESS
+qol_comparison %>%
   select(ESS_binary, SF36.MCS, SF36.PCS) %>% 
   tbl_summary(
     by = ESS_binary,
+    statistic = list(
+      all_continuous() ~ "{mean} ({sd})",
+      all_categorical() ~ "{n} ({p}%)")) %>%
+  add_n() %>%
+  add_p() %>% 
+  bold_labels()
+
+# compare the mean QOL for patients with high vs low AIS
+qol_comparison %>%
+  select(AIS_binary, SF36.MCS, SF36.PCS) %>% 
+  tbl_summary(
+    by = AIS_binary,
+    statistic = list(
+      all_continuous() ~ "{mean} ({sd})",
+      all_categorical() ~ "{n} ({p}%)")) %>%
+  add_n() %>%
+  add_p() %>% 
+  bold_labels()
+
+# compare the mean QOL for patients with high vs low BSS
+qol_comparison %>%
+  select(BSS, SF36.MCS, SF36.PCS) %>% 
+  tbl_summary(
+    by = BSS,
     statistic = list(
       all_continuous() ~ "{mean} ({sd})",
       all_categorical() ~ "{n} ({p}%)")) %>%
