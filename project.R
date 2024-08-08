@@ -104,9 +104,9 @@ d$ESS[d$ESS > 24] <- NA
 d %>% 
   select(-PSQI, -ESS, -AIS, -SF36.MCS, -SF36.PCS, -BSS) %>%
   mutate(Liver.Diagnosis = ifelse(Liver.Diagnosis == 1, "Hep C",
-                                  ifelse(Liver.Diagnosis == 2, "Hep B",
-                                         ifelse(Liver.Diagnosis == 3, "PSC/PBC/AHA",
-                                                ifelse(Liver.Diagnosis == 4, "Alcohol", "Other"))))) %>% 
+                             ifelse(Liver.Diagnosis == 2, "Hep B",
+                                ifelse(Liver.Diagnosis == 3, "PSC/PBC/AHA",
+                                  ifelse(Liver.Diagnosis == 4, "Alcohol", "Other"))))) %>% 
   tbl_summary(
     missing = "no",
     statistic = list(
