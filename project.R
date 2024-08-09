@@ -557,7 +557,9 @@ t1 <- qol_comparison %>%
       all_continuous() ~ "{mean} ({sd})",
       all_categorical() ~ "{n} ({p}%)")) %>%
   add_n() %>%
-  add_p() %>% 
+  add_p(
+    test = everything() ~ "t.test",
+    test.args = all_tests("t.test") ~ list(var.equal = FALSE)) %>% 
   bold_labels()
 
 # compare the mean QOL for patients with high vs low AIS
@@ -569,7 +571,9 @@ t2 <- qol_comparison %>%
       all_continuous() ~ "{mean} ({sd})",
       all_categorical() ~ "{n} ({p}%)")) %>%
   add_n() %>%
-  add_p() %>% 
+  add_p(
+    test = everything() ~ "t.test",
+    test.args = all_tests("t.test") ~ list(var.equal = FALSE)) %>% 
   bold_labels()
 
 # compare the mean QOL for patients with high vs low BSS
@@ -581,7 +585,9 @@ t3 <- qol_comparison %>%
       all_continuous() ~ "{mean} ({sd})",
       all_categorical() ~ "{n} ({p}%)")) %>%
   add_n() %>%
-  add_p() %>% 
+  add_p(
+    test = everything() ~ "t.test",
+    test.args = all_tests("t.test") ~ list(var.equal = FALSE)) %>% 
   bold_labels()
 
 # merge tables
